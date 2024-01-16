@@ -1,0 +1,57 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+
+#define PORT 8080 // server port number
+#define MAX 1024 // buffer size
+
+int main()
+{
+    int client_fd; // socket file descriptor
+    struct sockaddr_in server_addr; // socket address structure
+    char buffer[MAX]; // buffer for sending and receiving data
+    int random_num; // random number to receive
+
+    // create a TCP socket
+    client_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (client_fd == -1)
+    {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // fill the server address structure
+    server_addr.sin_family = AF_INET; // IPv4
+    server_addr.sin_addr.s_addr = inet_addr("192.168.242.129"); // server IP address
+    server_addr.sin_port = htons(PORT); // server port number in network byte order
+
+    // connect to the server
+    if (connect(client_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
+    {
+        perror("connect failed");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Client connected to the server\n");
+
+    // receive the random number from the server
+    if (recv(client_fd, buffer, MAX, 0) == -1) // receive the data
+    {
+        perror("recv failed");
+        exit(EXIT_FAILURE);
+    }
+
+    random_num = atoi(buffer); // convert the string to a number
+    printf("Client received the random number from the server: %d\n", random_num);
+
+// display the random number accordingly
+    printf("The random number is %d\n", random_num);
+
+    // close the socket
+    close(client_fd);
+
+    return 0;
