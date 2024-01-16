@@ -1,0 +1,80 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <time.h>
+
+#define PORT 8080 // server port number
+#define MAX 1024 // buffer size
+
+int main()
+{
+    int server_fd, client_fd; // socket file descriptors
+    struct sockaddr_in server_addr, client_addr; // socket address structures
+    socklen_t client_len; // length of client address
+    char buffer[MAX]; // buffer for sending and receiving data
+    int random_num; // random number to send
+
+    // create a TCP socket
+    server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (server_fd == -1)
+    {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // fill the server address structure
+    server_addr.sin_family = AF_INET; // IPv4
+    server_addr.sin_addr.s_addr = INADDR_ANY; // any available interface
+    server_addr.sin_port = htons(PORT); // port number in network byte order
+
+    // bind the socket to the server address
+    if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
+    {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // listen for incoming connections
+    if (listen(server_fd, 5) == -1) // backlog of 5
+    {
+        perror("listen failed");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Server is listening on port %d\n", PORT);
+
+    // accept a connection from a client
+    client_len = sizeof(client_addr);
+    client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
+if (client_fd == -1)
+    {
+        perror("accept failed");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Server accepted a connection from a client\n");
+
+    // choose a random number between 0 and 99
+    srand(time(NULL)); // seed the random number generator
+    random_num = rand() % 100; // generate a random number
+    printf("Server chose a random number: %d\n", random_num);
+
+    // send the random number to the client
+    sprintf(buffer, "%d", random_num); // convert the number to a string
+    if (send(client_fd, buffer, strlen(buffer), 0) == -1) // send the string
+    {
+        perror("send failed");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Server sent the random number to the client\n");
+
+    // close the sockets
+    close(client_fd);
+    close(server_fd);
+
+    return 0;
+}
